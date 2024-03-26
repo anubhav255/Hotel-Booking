@@ -36,9 +36,12 @@ public class BookingServer {
                     while ((line = br.readLine()) != null) {
                         requestBody.append(line);
                     }
-                    System.out.println(requestBody);
+
+                    // System.out.println(requestBody);
+                    
                     Gson gson = new Gson();
                     BookingInterface booking = gson.fromJson(requestBody.toString(), Booking.class);
+                    
                     try {
                         BookingDAO bookingDAO = new BookingDAO();
                         bookingDAO.add(booking);
@@ -46,19 +49,17 @@ public class BookingServer {
                         OutputStream os = exchange.getResponseBody();
                         os.write("{\"msg:\": \"Hotel Booking Confirmed\"}".getBytes());
                         os.close();
-                        exchange.close();
                     } catch (DAOException daoException) {
                         exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
-                        exchange.close();
                     }
                 }
             } else {
                 exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
-                exchange.close();
             }
+            exchange.close();
         }
     }
-
+    
     static class GetBookingByCustomerCode implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             String requestMethod = exchange.getRequestMethod();
@@ -68,29 +69,27 @@ public class BookingServer {
                 Matcher matcher = pattern.matcher(uri);
                 if (matcher.find()) {
                     int customerCode = Integer.parseInt(matcher.group(1));
-                    System.out.println(customerCode);
                     try {
                         BookingDAO bookingDAO = new BookingDAO();
                         List<BookingInterface> bookingList = bookingDAO.getByCustomerCode(customerCode);
-                        System.out.println(bookingList.size());
+
                         Gson gson = new Gson();
                         String bookingJson = gson.toJson(bookingList);
                         exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, bookingJson.getBytes().length);
+
                         OutputStream os = exchange.getResponseBody();
                         os.write(bookingJson.getBytes());
                         os.close();
-                        exchange.close();
                     } catch (DAOException daoException) {
                         exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                         exchange.getResponseBody().write(("{\"msg\": \"No Bookings Found\"}").getBytes());
-                        exchange.close();
                     }
 
                 } else {
                     exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
-                    exchange.close();
                 }
             }
+            exchange.close();
         }
     }
 
@@ -114,12 +113,11 @@ public class BookingServer {
                     OutputStream os = exchange.getResponseBody();
                     os.write(response.getBytes());
                     os.close();
-                    exchange.close();
                 } else {
                     exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
-                    exchange.close();
                 }
             }
+            exchange.close();
         }
     }
 
