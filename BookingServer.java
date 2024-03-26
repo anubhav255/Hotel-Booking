@@ -17,77 +17,14 @@ public class BookingServer {
 
         System.out.println("Server listening on port: " + port);
 
-        server.createContext("/newBooking", new AddBooking());
-        server.createContext("/getBooking", new GetBooking());
-        server.createContext("/cancelBooking", new CancelBooking());
+        server.createContext("/booking/create", new AddBooking());
+        server.createContext("/booking/get", new GetBookingByCustomerCode());
+        server.createContext("/booking/cancel", new CancelBookingByBookingId());
         server.setExecutor(null);
         server.start();
     }
 
-    static class CancelBooking implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
-            String requestMethod = exchange.getRequestMethod();
-            if (requestMethod.equalsIgnoreCase("DELETE")) {
-                String uri = exchange.getRequestURI().toString();
-                Pattern pattern = Pattern.compile("/cancelBooking/(\\d+)");
-                Matcher matcher = pattern.matcher(uri);
-                if (matcher.find()) {
-                    int bookingCode = Integer.parseInt(matcher.group(1));
-                    String response = ("{\"msg\" : \"Cancelled Booking with code: "+ bookingCode + "\"}");
-                    try {
-                        new BookingDAO().remove(bookingCode);
-                    } catch (DAOException daoException) {
-                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
-                        exchange.close();
-                    }
-                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes().length);
-                    OutputStream os = exchange.getResponseBody();
-                    os.write(response.getBytes());
-                    os.close();
-                    exchange.close();
-                } else {
-                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
-                    exchange.close();
-                }
-            }
-        }
-    }
-
-    static class GetBooking implements HttpHandler {
-        public void handle(HttpExchange exchange) throws IOException {
-            String requestMethod = exchange.getRequestMethod();
-            if (requestMethod.equalsIgnoreCase("GET")) {
-                String uri = exchange.getRequestURI().toString();
-                Pattern pattern = Pattern.compile("/getBooking/(\\d+)");
-                Matcher matcher = pattern.matcher(uri);
-                if (matcher.find()) {
-                    int customerCode = Integer.parseInt(matcher.group(1));
-                    System.out.println(customerCode);
-                    try {
-                        BookingDAO bookingDAO = new BookingDAO();
-                        List<BookingInterface> bookingList = bookingDAO.getByCustomerCode(customerCode);
-                        System.out.println(bookingList.size());
-                        Gson gson = new Gson();
-                        String bookingJson = gson.toJson(bookingList);
-                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, bookingJson.getBytes().length);
-                        OutputStream os = exchange.getResponseBody();
-                        os.write(bookingJson.getBytes());
-                        os.close();
-                        exchange.close();
-                    } catch (DAOException daoException) {
-                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
-                        exchange.getResponseBody().write(("{\"msg\": \"No Bookings Found\"}").getBytes());
-                        exchange.close();
-                    }
-
-                } else {
-                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
-                    exchange.close();
-                }
-            }
-        }
-    }
-
+    
     static class AddBooking implements HttpHandler {
         public void handle(HttpExchange exchange) throws IOException {
             String requestMethod = exchange.getRequestMethod();
@@ -118,6 +55,70 @@ public class BookingServer {
             } else {
                 exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
                 exchange.close();
+            }
+        }
+    }
+
+    static class GetBookingByCustomerCode implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String requestMethod = exchange.getRequestMethod();
+            if (requestMethod.equalsIgnoreCase("GET")) {
+                String uri = exchange.getRequestURI().toString();
+                Pattern pattern = Pattern.compile("/booking/get/(\\d+)");
+                Matcher matcher = pattern.matcher(uri);
+                if (matcher.find()) {
+                    int customerCode = Integer.parseInt(matcher.group(1));
+                    System.out.println(customerCode);
+                    try {
+                        BookingDAO bookingDAO = new BookingDAO();
+                        List<BookingInterface> bookingList = bookingDAO.getByCustomerCode(customerCode);
+                        System.out.println(bookingList.size());
+                        Gson gson = new Gson();
+                        String bookingJson = gson.toJson(bookingList);
+                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, bookingJson.getBytes().length);
+                        OutputStream os = exchange.getResponseBody();
+                        os.write(bookingJson.getBytes());
+                        os.close();
+                        exchange.close();
+                    } catch (DAOException daoException) {
+                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
+                        exchange.getResponseBody().write(("{\"msg\": \"No Bookings Found\"}").getBytes());
+                        exchange.close();
+                    }
+
+                } else {
+                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
+                    exchange.close();
+                }
+            }
+        }
+    }
+
+    static class CancelBookingByBookingId implements HttpHandler {
+        public void handle(HttpExchange exchange) throws IOException {
+            String requestMethod = exchange.getRequestMethod();
+            if (requestMethod.equalsIgnoreCase("DELETE")) {
+                String uri = exchange.getRequestURI().toString();
+                Pattern pattern = Pattern.compile("/booking/cancel/(\\d+)");
+                Matcher matcher = pattern.matcher(uri);
+                if (matcher.find()) {
+                    int bookingCode = Integer.parseInt(matcher.group(1));
+                    String response = ("{\"msg\" : \"Cancelled Booking with code: "+ bookingCode + "\"}");
+                    try {
+                        new BookingDAO().delete(bookingCode);
+                    } catch (DAOException daoException) {
+                        exchange.sendResponseHeaders(HttpURLConnection.HTTP_BAD_REQUEST, 0);
+                        exchange.close();
+                    }
+                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.getBytes().length);
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
+                    exchange.close();
+                } else {
+                    exchange.sendResponseHeaders(HttpURLConnection.HTTP_NOT_FOUND, 0);
+                    exchange.close();
+                }
             }
         }
     }
