@@ -30,6 +30,7 @@ public class BookingDAO implements BookingDAOInterface {
             throw new DAOException("Unable to add : " + sqlException.getMessage());
         }
     }
+    
     public List<BookingInterface> getByCustomerCode(int customerCode) throws DAOException {
         List<BookingInterface> bookings;
         try {
@@ -67,7 +68,7 @@ public class BookingDAO implements BookingDAOInterface {
             throw new DAOException("Unable to fetch : "+ sqlException.getMessage());
         }
     }
-    public void remove(int bookingCode) throws DAOException {
+    public void delete(int bookingCode) throws DAOException {
         try {
             Connection connection = DAOConnection.getConnection();
             PreparedStatement preparedStatement;
